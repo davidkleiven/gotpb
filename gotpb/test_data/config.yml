@@ -1,0 +1,4 @@
+link: www.example.com
+users:
+  - email: user1@gmail.com
+  - email: user2@gmail.com
