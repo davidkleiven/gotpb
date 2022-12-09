@@ -7,12 +7,13 @@ import (
 )
 
 type Config struct {
-	Link  string `yaml:"link"`
-	Users []User `yaml:"users"`
+	Groups map[string]string `yaml:"groups"`
+	Users  []User            `yaml:"users"`
 }
 
 type User struct {
 	Email string `yaml:"email"`
+	Group string `yaml:"group"`
 }
 
 func GetConf(fname string) Config {

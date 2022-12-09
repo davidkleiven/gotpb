@@ -1,4 +1,8 @@
-link: www.example.com
+groups:
+  solo: www.example.com
+
 users:
   - email: user1@gmail.com
+    group: solo
   - email: user2@gmail.com
+    group: solo

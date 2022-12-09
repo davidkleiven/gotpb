@@ -1,12 +1,17 @@
 package gotpb
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestGetConf(t *testing.T) {
 	conf := GetConf("test_data/config.yml")
 
-	if conf.Link != "www.example.com" {
-		t.Errorf("Expected 'www.example.com' got %s", conf.Link)
+	expect := map[string]string{"solo": "www.example.com"}
+
+	if !reflect.DeepEqual(conf.Groups, expect) {
+		t.Errorf("Expected %s got %s", expect, conf.Groups)
 	}
 
 	if len(conf.Users) != 2 {
