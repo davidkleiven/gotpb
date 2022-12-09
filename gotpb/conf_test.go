@@ -26,3 +26,30 @@ func TestGetConf(t *testing.T) {
 		}
 	}
 }
+
+func invalidConf() Config {
+	return Config{
+		Groups: map[string]string{"solo": "www.example.com"},
+		Users:  []User{{Email: "dk@hotmail.com", Group: "secondCornet"}}}
+}
+
+func TestValidateConf(t *testing.T) {
+	for i, test := range []struct {
+		conf   Config
+		expect bool
+	}{
+		{
+			conf:   GetConf("test_data/config.yml"),
+			expect: true,
+		},
+		{
+			conf:   invalidConf(),
+			expect: false,
+		},
+	} {
+		res := ValidateConf(test.conf)
+		if res != test.expect {
+			t.Errorf("Test #%d: %v got %v", i, res, test.expect)
+		}
+	}
+}

@@ -26,3 +26,12 @@ func GetConf(fname string) Config {
 	panicOnErr(err)
 	return config
 }
+
+func ValidateConf(conf Config) bool {
+	for _, user := range conf.Users {
+		if _, ok := conf.Groups[user.Group]; !ok {
+			return false
+		}
+	}
+	return true
+}
