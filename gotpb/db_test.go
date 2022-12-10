@@ -27,8 +27,8 @@ func TestInit(t *testing.T) {
 		count += 1
 	}
 
-	if count != 1 {
-		t.Errorf("Got %d tables expected 1", count)
+	if count != 2 {
+		t.Errorf("Got %d tables expected 2", count)
 	}
 }
 
