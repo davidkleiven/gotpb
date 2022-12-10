@@ -25,8 +25,11 @@ func RunSingleCheck(conf Config) {
 	}
 
 	for name := range conf.Groups {
-		songs := filterAndInsertSongsInDb(<-file, conf)
-		sendEmailNotification(songs, conf.UsersInGroup(name))
+		songs := songsFromZip(<-file)
+		newSongs := filterAndInsertSongsInDb(songs, conf)
+		users := conf.UsersInGroup(name)
+		sendNewSongNotification(newSongs, users, conf)
+		sendSongListNotification(songs, users, conf)
 	}
 }
 
@@ -51,8 +54,7 @@ func songFromFilename(fname string) Song {
 	}
 }
 
-func filterAndInsertSongsInDb(zipFile string, conf Config) []Song {
-	songs := songsFromZip(zipFile)
+func filterAndInsertSongsInDb(songs []Song, conf Config) []Song {
 	t := time.Now().UTC().Add(-time.Hour * HOURS_PER_DAY * DAYS_PER_MONTH * conf.MemoryMonths)
 
 	db := getDB(conf.Db)
@@ -64,7 +66,7 @@ func filterAndInsertSongsInDb(zipFile string, conf Config) []Song {
 	return newSongs
 }
 
-func sendEmailNotification(songs []Song, users []User) {
+func sendNewSongNotification(songs []Song, users []User, conf Config) {
 	if len(songs) == 0 || len(users) == 0 {
 		log.Printf("Number of new songs %d. Number of users in group %d. No notifications sent.", len(songs), len(users))
 		return
@@ -72,6 +74,10 @@ func sendEmailNotification(songs []Song, users []User) {
 
 	msg := produceEmail(songs)
 	log.Printf("%s", msg)
+
+	db := getDB(conf.Db)
+	defer db.Close()
+	insertNewSongNotification(db)
 }
 
 func produceEmail(songs []Song) string {
@@ -80,4 +86,23 @@ func produceEmail(songs []Song) string {
 		msg += fmt.Sprintf("%s\n", song.Title)
 	}
 	return msg
+}
+
+func sendSongListNotification(songs []Song, users []User, conf Config) {
+	timestamp := time.Now().UTC()
+
+	if timestamp.Weekday() != time.Friday {
+		return
+	}
+	db := getDB(conf.Db)
+	defer db.Close()
+	latest := getLatestSongListNotification(db)
+
+	if time.Since(latest) < time.Hour*time.Duration(48) {
+		return
+	}
+
+	msg := produceEmail(songs)
+	log.Panicf("%s", msg)
+	insertSongListNotification(db)
 }
