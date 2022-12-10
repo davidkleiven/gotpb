@@ -14,5 +14,6 @@ func main() {
 
 	conf_file := os.Args[1]
 	log.Printf("Loading config from %s", conf_file)
-	gotpb.GetConf(conf_file)
+	conf := gotpb.GetConf(conf_file)
+	gotpb.RunSingleCheck(conf)
 }

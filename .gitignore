@@ -15,3 +15,5 @@
 # vendor/
 tbb.yml
 tbb
+.gotbbcache/*
+gotpb.db

@@ -1,3 +1,5 @@
+memoryMonts: 6
+db: "gotpb.db"
 groups:
   solo: www.example.com
 

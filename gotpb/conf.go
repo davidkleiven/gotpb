@@ -2,13 +2,26 @@ package gotpb
 
 import (
 	"io/ioutil"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
 
 type Config struct {
-	Groups map[string]string `yaml:"groups"`
-	Users  []User            `yaml:"users"`
+	Groups       map[string]string `yaml:"groups"`
+	Users        []User            `yaml:"users"`
+	MemoryMonths time.Duration     `yaml:"memoryMonts"`
+	Db           string            `yaml:"db"`
+}
+
+func (c Config) UsersInGroup(group string) []User {
+	users := []User{}
+	for _, user := range c.Users {
+		if user.Group == group {
+			users = append(users, user)
+		}
+	}
+	return users
 }
 
 type User struct {
