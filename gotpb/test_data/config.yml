@@ -1,5 +1,12 @@
 memoryMonts: 6
 db: "gotpb.db"
+
+emailClient:
+  host: "localhost"
+  port: 5656
+  username: "demo@example.com"
+  password: "secretPassword"
+
 groups:
   solo: www.example.com
 

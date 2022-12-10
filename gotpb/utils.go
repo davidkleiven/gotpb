@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strconv"
 	"time"
+
+	mail "github.com/xhit/go-simple-mail/v2"
 )
 
 const HOURS_PER_DAY = 24
@@ -72,8 +74,9 @@ func sendNewSongNotification(songs []Song, users []User, conf Config) {
 		return
 	}
 
-	msg := produceEmail(songs)
-	log.Printf("%s", msg)
+	email := prepareEmail(conf, users)
+	email.SetBody(mail.TextPlain, produceEmail(songs))
+	sendEmail(email, conf)
 
 	db := getDB(conf.Db)
 	defer db.Close()
@@ -92,6 +95,7 @@ func sendSongListNotification(songs []Song, users []User, conf Config) {
 	timestamp := time.Now().UTC()
 
 	if timestamp.Weekday() != time.Friday {
+		log.Printf("Today is %v. No email sent. (Sends only on %v)", timestamp.Weekday(), time.Friday)
 		return
 	}
 	db := getDB(conf.Db)
@@ -102,7 +106,8 @@ func sendSongListNotification(songs []Song, users []User, conf Config) {
 		return
 	}
 
-	msg := produceEmail(songs)
-	log.Panicf("%s", msg)
+	email := prepareEmail(conf, users)
+	email.SetBody(mail.TextPlain, produceEmail(songs))
+	sendEmail(email, conf)
 	insertSongListNotification(db)
 }

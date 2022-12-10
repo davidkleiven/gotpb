@@ -8,10 +8,11 @@ import (
 )
 
 type Config struct {
-	Groups       map[string]string `yaml:"groups"`
-	Users        []User            `yaml:"users"`
-	MemoryMonths time.Duration     `yaml:"memoryMonts"`
-	Db           string            `yaml:"db"`
+	Groups            map[string]string `yaml:"groups"`
+	Users             []User            `yaml:"users"`
+	MemoryMonths      time.Duration     `yaml:"memoryMonts"`
+	Db                string            `yaml:"db"`
+	EmailClientConfig EmailClientConfig `yaml:"emailClient"`
 }
 
 func (c Config) UsersInGroup(group string) []User {
@@ -27,6 +28,13 @@ func (c Config) UsersInGroup(group string) []User {
 type User struct {
 	Email string `yaml:"email"`
 	Group string `yaml:"group"`
+}
+
+type EmailClientConfig struct {
+	Host     string
+	Port     int
+	Username string
+	Password string
 }
 
 func GetConf(fname string) Config {
