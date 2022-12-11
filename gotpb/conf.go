@@ -13,6 +13,8 @@ type Config struct {
 	MemoryMonths      time.Duration     `yaml:"memoryMonts"`
 	Db                string            `yaml:"db"`
 	EmailClientConfig EmailClientConfig `yaml:"emailClient"`
+	Port              int               `yaml:"port"`
+	Interval          int               `yaml:"interval"`
 }
 
 func (c Config) UsersInGroup(group string) []User {

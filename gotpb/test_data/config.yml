@@ -1,5 +1,7 @@
 memoryMonts: 6
 db: "gotpb.db"
+port: 8081
+interval 12
 
 emailClient:
   host: "localhost"

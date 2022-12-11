@@ -76,11 +76,13 @@ func sendNewSongNotification(songs []Song, users []User, conf Config) {
 
 	email := prepareEmail(conf, users)
 	email.SetBody(mail.TextPlain, produceEmail(songs))
+	email.SetSubject("New songs")
 	sendEmail(email, conf)
 
 	db := getDB(conf.Db)
 	defer db.Close()
 	insertNewSongNotification(db)
+	log.Printf("New songs notification sent")
 }
 
 func produceEmail(songs []Song) string {
@@ -107,7 +109,9 @@ func sendSongListNotification(songs []Song, users []User, conf Config) {
 	}
 
 	email := prepareEmail(conf, users)
+	email.SetSubject("Summary")
 	email.SetBody(mail.TextPlain, produceEmail(songs))
 	sendEmail(email, conf)
 	insertSongListNotification(db)
+	log.Printf("Song list notification sent")
 }
