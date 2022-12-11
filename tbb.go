@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"gotpb/gotpb"
 	"log"
@@ -30,18 +31,25 @@ func main() {
 	log.Printf("Service running on: http://localhost:%d\nUse Ctrl^C to exit", conf.Port)
 
 	go periodicCheck(quit, conf)
+
+	server := http.Server{Addr: fmt.Sprintf(":%d", conf.Port)}
 	go func() {
-		<-sig
-		quit <- true
-		time.Sleep(time.Second)
-		os.Exit(0)
+		if err := server.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalf("%v", err)
+		}
 	}()
-	err := http.ListenAndServe(fmt.Sprintf(":%d", conf.Port), nil)
-	log.Printf("%v", err)
+	<-sig
+	quit <- true
+
+	time.Sleep(time.Second)
+	if err := server.Shutdown(context.TODO()); err != nil {
+		panic(err)
+	}
 }
 
 func periodicCheck(quit chan bool, conf gotpb.Config) {
 	log.Printf("Periodic task started")
+
 	for {
 		select {
 		case <-quit:
