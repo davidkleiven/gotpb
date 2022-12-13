@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS songs
 `
 
 const CREATE_NOTIFICATIONS = `
-CREATE TABLE IF NOT EXISTS notifications (timestamp TEXT, type TEXT, intrument_group TEXT)
+CREATE TABLE IF NOT EXISTS notifications (timestamp TEXT, type TEXT, instrument_group TEXT)
 `
 
 const INSERT_STMT = `
@@ -36,6 +36,7 @@ SELECT MAX(timestamp) FROM notifications WHERE type = ? AND instrument_group = ?
 
 const NEW_SONG = "newSong"
 const SONG_LIST = "songList"
+const TIME_LAYOUT = "2006-01-02 00:00:00 +0000 UTC"
 
 func initDb(db *sql.DB) {
 	statements := []string{CREATE_STMT, CREATE_NOTIFICATIONS}
@@ -53,7 +54,7 @@ func insertNotification(db *sql.DB, notificationType string, group string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	t := time.Now().UTC().String()
+	t := time.Now().UTC().Format(TIME_LAYOUT)
 	statement.Exec(t, notificationType, group)
 }
 
@@ -75,8 +76,8 @@ func getLatestSongListNotification(db *sql.DB, group string) time.Time {
 	rows.Next()
 	var timestamp string
 	rows.Scan(&timestamp)
-	layout := time.Now().UTC().String()
-	t, err := time.Parse(layout, timestamp)
+
+	t, err := time.Parse(TIME_LAYOUT, timestamp)
 
 	if err != nil {
 		log.Fatal(err)
