@@ -87,5 +87,46 @@ func TestInsertFetchNotifications(t *testing.T) {
 	if notification2.Before(notification1) {
 		t.Errorf("Notification 2 was inserted after notification end. t1: %v, t2: %v\n", notification1, notification2)
 	}
+}
 
+func TestNewSongs(t *testing.T) {
+	songs := []Song{
+		{
+			Code:  1,
+			Title: "One",
+			Ext:   "pdf",
+		},
+		{
+			Code:  2,
+			Title: "Two",
+			Ext:   "pdf",
+		},
+	}
+
+	old := []Song{
+		{
+			Code:  1,
+			Title: "One",
+			Ext:   "pdf",
+		},
+	}
+
+	new := newSongs(songs, old)
+	expect := []Song{
+		{
+			Code:  2,
+			Title: "Two",
+			Ext:   "pdf",
+		},
+	}
+
+	if len(expect) != len(new) {
+		t.Errorf("Expectd 1 new song. God %d", len(new))
+	}
+
+	for i := range expect {
+		if expect[i].Title != new[i].Title {
+			t.Errorf("Expected %s got %s", expect[i].Title, new[i].Title)
+		}
+	}
 }
