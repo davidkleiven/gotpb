@@ -70,3 +70,22 @@ func TestInsert(t *testing.T) {
 		}
 	}
 }
+
+func TestInsertFetchNotifications(t *testing.T) {
+	db, err := sql.Open("sqlite3", "file::memory:?cache=shared")
+	if err != nil {
+		t.Errorf("%v\n", err)
+	}
+	initDb(db)
+
+	insertSongListNotification(db, "group1")
+	insertSongListNotification(db, "group2")
+
+	notification1 := getLatestSongListNotification(db, "group1")
+	notification2 := getLatestSongListNotification(db, "group2")
+
+	if notification2.Before(notification1) {
+		t.Errorf("Notification 2 was inserted after notification end. t1: %v, t2: %v\n", notification1, notification2)
+	}
+
+}
