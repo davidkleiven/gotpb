@@ -29,9 +29,8 @@ func RunSingleCheck(conf Config) {
 	for name := range conf.Groups {
 		songs := songsFromZip(<-file)
 		newSongs := filterAndInsertSongsInDb(songs, conf)
-		users := conf.UsersInGroup(name)
-		sendNewSongNotification(newSongs, users, conf)
-		sendSongListNotification(songs, users, conf)
+		sendNewSongNotification(newSongs, name, conf)
+		sendSongListNotification(songs, name, conf)
 	}
 }
 
@@ -68,7 +67,8 @@ func filterAndInsertSongsInDb(songs []Song, conf Config) []Song {
 	return newSongs
 }
 
-func sendNewSongNotification(songs []Song, users []User, conf Config) {
+func sendNewSongNotification(songs []Song, group string, conf Config) {
+	users := conf.UsersInGroup(group)
 	if len(songs) == 0 || len(users) == 0 {
 		log.Printf("Number of new songs %d. Number of users in group %d. No notifications sent.", len(songs), len(users))
 		return
@@ -81,7 +81,7 @@ func sendNewSongNotification(songs []Song, users []User, conf Config) {
 
 	db := getDB(conf.Db)
 	defer db.Close()
-	insertNewSongNotification(db)
+	insertNewSongNotification(db, group)
 	log.Printf("New songs notification sent")
 }
 
@@ -93,16 +93,16 @@ func produceEmail(songs []Song) string {
 	return msg
 }
 
-func sendSongListNotification(songs []Song, users []User, conf Config) {
+func sendSongListNotification(songs []Song, group string, conf Config) {
 	timestamp := time.Now().UTC()
-
+	users := conf.UsersInGroup(group)
 	if timestamp.Weekday() != time.Friday {
 		log.Printf("Today is %v. No email sent. (Sends only on %v)", timestamp.Weekday(), time.Friday)
 		return
 	}
 	db := getDB(conf.Db)
 	defer db.Close()
-	latest := getLatestSongListNotification(db)
+	latest := getLatestSongListNotification(db, group)
 
 	if time.Since(latest) < time.Hour*time.Duration(48) {
 		return
@@ -112,6 +112,6 @@ func sendSongListNotification(songs []Song, users []User, conf Config) {
 	email.SetSubject("Summary")
 	email.SetBody(mail.TextPlain, produceEmail(songs))
 	sendEmail(email, conf)
-	insertSongListNotification(db)
+	insertSongListNotification(db, group)
 	log.Printf("Song list notification sent")
 }

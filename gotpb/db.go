@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS songs
 `
 
 const CREATE_NOTIFICATIONS = `
-CREATE TABLE IF NOT EXISTS notifications (timestamp TEXT, type TEXT)
+CREATE TABLE IF NOT EXISTS notifications (timestamp TEXT, type TEXT, intrument_group TEXT)
 `
 
 const INSERT_STMT = `
@@ -23,7 +23,7 @@ INSERT INTO songs VALUES (?, ?, ?, ?)
 `
 
 const INSERT_NOTIFICATION = `
-INSERT INTO notifications VALUES (?, ?)
+INSERT INTO notifications VALUES (?, ?, ?)
 `
 
 const GET_SONGS = `
@@ -31,7 +31,7 @@ SELECT code, title FROM songs WHERE timestamp >= ?
 `
 
 const LATEST_NOTIFICATION = `
-SELECT MAX(timestamp) FROM notifications WHERE type = ?
+SELECT MAX(timestamp) FROM notifications WHERE type = ? AND instrument_group = ?
 `
 
 const NEW_SONG = "newSong"
@@ -48,25 +48,25 @@ func initDb(db *sql.DB) {
 	}
 }
 
-func insertNotification(db *sql.DB, notificationType string) {
+func insertNotification(db *sql.DB, notificationType string, group string) {
 	statement, err := db.Prepare(INSERT_NOTIFICATION)
 	if err != nil {
 		log.Fatal(err)
 	}
 	t := time.Now().UTC().String()
-	statement.Exec(t, notificationType)
+	statement.Exec(t, notificationType, group)
 }
 
-func insertNewSongNotification(db *sql.DB) {
-	insertNotification(db, NEW_SONG)
+func insertNewSongNotification(db *sql.DB, group string) {
+	insertNotification(db, NEW_SONG, group)
 }
 
-func insertSongListNotification(db *sql.DB) {
-	insertNotification(db, SONG_LIST)
+func insertSongListNotification(db *sql.DB, group string) {
+	insertNotification(db, SONG_LIST, group)
 }
 
-func getLatestSongListNotification(db *sql.DB) time.Time {
-	rows, err := db.Query(LATEST_NOTIFICATION, SONG_LIST)
+func getLatestSongListNotification(db *sql.DB, group string) time.Time {
+	rows, err := db.Query(LATEST_NOTIFICATION, SONG_LIST, group)
 
 	if err != nil {
 		log.Fatal(err)
