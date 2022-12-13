@@ -2,9 +2,6 @@ name: GoTPB
 
 on: [push]
 
-env:
-  CODECOV_TOKEN=e3133fdf-6d6a-455d-9d01-c5f82a1b7d3d
-
 jobs:
   build:
 
