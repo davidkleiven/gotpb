@@ -2,6 +2,9 @@ name: GoTPB
 
 on: [push]
 
+env:
+  CODECOV_TOKEN=e3133fdf-6d6a-455d-9d01-c5f82a1b7d3d
+
 jobs:
   build:
 
@@ -18,4 +21,7 @@ jobs:
         run: go build -v ./...
 
       - name: Test
-        run: go test -v ./...
+        run: go test -v ./... -covermode=count -coverprofile=coverage.out
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
