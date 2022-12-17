@@ -2,6 +2,8 @@ package gotpb
 
 import (
 	"archive/zip"
+	"fmt"
+	"hash/fnv"
 	"io"
 	"log"
 	"net/http"
@@ -11,13 +13,20 @@ import (
 
 const CACHE_FOLDER = ".gotbbcache"
 
-func cacheFile() string {
+func cacheFile(url string) string {
 	newpath := filepath.Join(".", CACHE_FOLDER)
 	err := os.MkdirAll(newpath, os.ModePerm)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return CACHE_FOLDER + "/noter.zip"
+
+	return CACHE_FOLDER + "/" + urlHash(url) + ".zip"
+}
+
+func urlHash(url string) string {
+	h := fnv.New32a()
+	h.Write([]byte(url))
+	return fmt.Sprintf("%x", h.Sum32())
 }
 
 func fetch(url string, c chan string) {
@@ -28,7 +37,7 @@ func fetch(url string, c chan string) {
 		return
 	}
 
-	file := cacheFile()
+	file := cacheFile(url)
 	out, err := os.Create(file)
 	if err != nil {
 		c <- ""
