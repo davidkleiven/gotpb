@@ -38,6 +38,10 @@ const NEW_SONG = "newSong"
 const SONG_LIST = "songList"
 const TIME_LAYOUT = "2006-01-02 00:00:00 +0000 UTC"
 
+func defaultTime() time.Time {
+	return time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
+}
+
 func initDb(db *sql.DB) {
 	statements := []string{CREATE_STMT, CREATE_NOTIFICATIONS}
 	for _, query := range statements {
@@ -73,16 +77,17 @@ func getLatestSongListNotification(db *sql.DB, group string) time.Time {
 		log.Fatal(err)
 	}
 
-	rows.Next()
-	var timestamp string
-	rows.Scan(&timestamp)
+	if rows.Next() {
+		var timestamp string
+		rows.Scan(&timestamp)
 
-	t, err := time.Parse(TIME_LAYOUT, timestamp)
+		if t, err := time.Parse(TIME_LAYOUT, timestamp); err == nil {
+			return t
+		}
 
-	if err != nil {
-		log.Fatal(err)
+		log.Printf("%v\n", err)
 	}
-	return t
+	return defaultTime()
 }
 
 func getDB(dbName string) *sql.DB {

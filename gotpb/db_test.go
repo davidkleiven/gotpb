@@ -130,3 +130,16 @@ func TestNewSongs(t *testing.T) {
 		}
 	}
 }
+
+func TestGetLatestSongNotificationNoDBContent(t *testing.T) {
+	db, err := sql.Open("sqlite3", "file::memory:?cache=shared")
+	if err != nil {
+		t.Errorf("%v\n", err)
+	}
+	initDb(db)
+	latest := getLatestSongListNotification(db, "group")
+
+	if latest != defaultTime() {
+		t.Errorf("Expected %v got %v", defaultTime(), latest)
+	}
+}
