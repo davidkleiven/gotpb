@@ -96,8 +96,8 @@ func produceEmail(songs []Song) string {
 func sendSongListNotification(songs []Song, group string, conf Config) {
 	timestamp := time.Now().UTC()
 	users := conf.UsersInGroup(group)
-	if timestamp.Weekday() != time.Friday {
-		log.Printf("Today is %v. No email sent. (Sends only on %v)", timestamp.Weekday(), time.Friday)
+	if timestamp.Weekday() != time.Wednesday {
+		log.Printf("Today is %v. No email sent. (Sends only on %v)", timestamp.Weekday(), time.Wednesday)
 		return
 	}
 	db := getDB(conf.Db)
@@ -105,6 +105,7 @@ func sendSongListNotification(songs []Song, group string, conf Config) {
 	latest := getLatestSongListNotification(db, group)
 
 	if time.Since(latest) < time.Hour*time.Duration(48) {
+		log.Printf("Less than 48 hours since last song list notification. No notification sent\n")
 		return
 	}
 
