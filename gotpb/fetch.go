@@ -63,7 +63,7 @@ func songsFromZip(fname string) []Song {
 	defer archive.Close()
 	songs := []Song{}
 	for _, file := range archive.File {
-		newSong := songFromFilename(file.Name)
+		newSong := songFromFile(file)
 		if newSong.Code > 0 {
 			songs = append(songs, newSong)
 		}

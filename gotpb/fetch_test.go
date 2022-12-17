@@ -1,14 +1,17 @@
 package gotpb
 
 import (
+	"archive/zip"
 	"gotpb/gotpb/t_utils"
 	"strings"
 	"testing"
 )
 
-func TestSongFromFilename(t *testing.T) {
+func TestSongFromFile(t *testing.T) {
 	fname := "1023 mysong.pdf"
-	song := songFromFilename(fname)
+	header := zip.FileHeader{Name: fname}
+	file := zip.File{FileHeader: header}
+	song := songFromFile(&file)
 	if song.Code != 1023 {
 		t.Errorf("Expected 1023 got %d", song.Code)
 	}

@@ -1,6 +1,7 @@
 package gotpb
 
 import (
+	"archive/zip"
 	"fmt"
 	"log"
 	"regexp"
@@ -35,23 +36,25 @@ func RunSingleCheck(conf Config) {
 }
 
 type Song struct {
-	Code  int
-	Title string
-	Ext   string
+	Code    int
+	Title   string
+	Ext     string
+	Content *zip.File
 }
 
-func songFromFilename(fname string) Song {
+func songFromFile(file *zip.File) Song {
 	re := regexp.MustCompile(`([0-9]+) ([A-Za-z0-9 -ÆØÅæøå]+)\.([a-z]+)`)
-	res := re.FindStringSubmatch(fname)
+	res := re.FindStringSubmatch(file.Name)
 	if len(res) != 4 {
-		log.Printf("Could not extract song information from %s. Num capture groups %d", fname, len(res))
-		return Song{Code: -1, Title: fname, Ext: "unknown"}
+		log.Printf("Could not extract song information from %s. Num capture groups %d", file.Name, len(res))
+		return Song{Code: -1, Title: file.Name, Ext: "unknown", Content: file}
 	}
 	code, _ := strconv.Atoi(res[1])
 	return Song{
-		Code:  code,
-		Title: res[2],
-		Ext:   res[3],
+		Code:    code,
+		Title:   res[2],
+		Ext:     res[3],
+		Content: file,
 	}
 }
 
