@@ -16,4 +16,5 @@
 tbb.yml
 tbb
 .gotbbcache/*
+gotpb/.gotbbcache/*
 gotpb.db
