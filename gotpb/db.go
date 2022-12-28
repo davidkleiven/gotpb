@@ -56,7 +56,8 @@ func initDb(db *sql.DB) {
 func insertNotification(db *sql.DB, notificationType string, group string) {
 	statement, err := db.Prepare(INSERT_NOTIFICATION)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("insertNotifiction for type %s for group %s failed with %v", notificationType, group, err)
+		return
 	}
 	t := time.Now().UTC().Format(TIME_LAYOUT)
 	statement.Exec(t, notificationType, group)
@@ -85,7 +86,7 @@ func getLatestSongListNotification(db *sql.DB, group string) time.Time {
 			return t
 		}
 
-		log.Printf("%v\n", err)
+		log.Printf("Error while parsing timestamp %s: %v\n", timestamp, err)
 	}
 	return defaultTime()
 }
@@ -106,7 +107,8 @@ func insertSong(db *sql.DB, song Song) {
 	t := time.Now().UTC().String()
 	statement, err := db.Prepare(INSERT_STMT)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Error while inserting song %v", err)
+		return
 	}
 	statement.Exec(song.Code, song.Title, t, 1)
 }
