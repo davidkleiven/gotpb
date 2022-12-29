@@ -22,7 +22,7 @@ func main() {
 	conf := gotpb.GetConf(conf_file)
 
 	//gotpb.RunSingleCheck(conf)
-	gotpb.InitRestService()
+	gotpb.InitRestService(conf)
 
 	quit := make(chan bool, 1)
 	sig := make(chan os.Signal, 1)

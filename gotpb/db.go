@@ -2,6 +2,7 @@ package gotpb
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -150,4 +151,28 @@ func newSongs(new []Song, old []Song) []Song {
 		}
 	}
 	return songs
+}
+
+type NotificationInfo struct {
+	Time  string `json:"time"`
+	Type  string `json:"type"`
+	Group string `json:"group"`
+}
+
+// Return num latest notifications
+func getLatestNotifications(db *sql.DB, num int) ([]NotificationInfo, error) {
+	query := fmt.Sprintf("SELECT * FROM notifications ORDER BY timestamp LIMIT %d", num)
+	rows, err := db.Query(query)
+
+	if err != nil {
+		return []NotificationInfo{}, err
+	}
+
+	notificationInfo := []NotificationInfo{}
+	for rows.Next() {
+		i := NotificationInfo{}
+		rows.Scan(&i.Time, &i.Type, &i.Group)
+		notificationInfo = append(notificationInfo, i)
+	}
+	return notificationInfo, nil
 }
