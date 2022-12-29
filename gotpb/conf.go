@@ -1,6 +1,7 @@
 package gotpb
 
 import (
+	"database/sql"
 	"io/ioutil"
 	"time"
 
@@ -25,6 +26,10 @@ func (c Config) UsersInGroup(group string) []User {
 		}
 	}
 	return users
+}
+
+func (c Config) DbConnection() *sql.DB {
+	return getDB(c.Db)
 }
 
 type User struct {
