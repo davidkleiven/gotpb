@@ -37,7 +37,7 @@ SELECT MAX(timestamp) FROM notifications WHERE type = ? AND instrument_group = ?
 
 const NEW_SONG = "newSong"
 const SONG_LIST = "songList"
-const TIME_LAYOUT = "2006-01-02 00:00:00 +0000 UTC"
+const TIME_LAYOUT = "2006-01-02T00:00:00Z"
 
 func defaultTime() time.Time {
 	return time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
@@ -105,7 +105,7 @@ func getDB(dbName string) *sql.DB {
 }
 
 func insertSong(db *sql.DB, song Song) {
-	t := time.Now().UTC().String()
+	t := time.Now().UTC().Format(TIME_LAYOUT)
 	statement, err := db.Prepare(INSERT_STMT)
 	if err != nil {
 		log.Printf("Error while inserting song %v", err)
