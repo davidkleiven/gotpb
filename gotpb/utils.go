@@ -30,8 +30,11 @@ func RunSingleCheck(conf Config) {
 	for name := range conf.Groups {
 		songs := songsFromZip(<-file)
 		newSongs := filterAndInsertSongsInDb(songs, conf)
-		sendNewSongNotification(newSongs, name, conf)
-		sendSongListNotification(songs, name, conf)
+
+		email := mail.NewMSG()
+		sendNewSongNotification(newSongs, name, conf, email)
+		email = mail.NewMSG()
+		sendSongListNotification(songs, name, conf, email)
 	}
 }
 
@@ -70,14 +73,14 @@ func filterAndInsertSongsInDb(songs []Song, conf Config) []Song {
 	return newSongs
 }
 
-func sendNewSongNotification(songs []Song, group string, conf Config) {
+func sendNewSongNotification(songs []Song, group string, conf Config, email Email) {
 	users := conf.UsersInGroup(group)
 	if len(songs) == 0 || len(users) == 0 {
 		log.Printf("Number of new songs %d. Number of users in group %d. No notifications sent.", len(songs), len(users))
 		return
 	}
 
-	email := prepareEmail(conf, users)
+	prepareEmail(email, users)
 	email.SetBody(mail.TextPlain, produceEmail(songs))
 	email.SetSubject("New songs")
 	sendEmail(email, conf)
@@ -96,14 +99,14 @@ func produceEmail(songs []Song) string {
 	return msg
 }
 
-func sendSongListNotification(songs []Song, group string, conf Config) {
+func sendSongListNotification(songs []Song, group string, conf Config, email Email) {
 	timestamp := time.Now().UTC()
 	users := conf.UsersInGroup(group)
 	if timestamp.Weekday() != time.Wednesday {
 		log.Printf("Today is %v. No email sent. (Sends only on %v)", timestamp.Weekday(), time.Wednesday)
 		return
 	}
-	db := getDB(conf.Db)
+	db := conf.DbConnection()
 	defer db.Close()
 	latest := getLatestSongListNotification(db, group)
 
@@ -112,7 +115,7 @@ func sendSongListNotification(songs []Song, group string, conf Config) {
 		return
 	}
 
-	email := prepareEmail(conf, users)
+	prepareEmail(email, users)
 	email.SetSubject("Summary")
 	email.SetBody(mail.TextPlain, produceEmail(songs))
 	sendEmail(email, conf)
