@@ -1,10 +1,15 @@
 package gotpb
 
-import "testing"
+import (
+	"testing"
+
+	mail "github.com/xhit/go-simple-mail/v2"
+)
 
 func TestPrepEmail(t *testing.T) {
 	conf := GetConf("test_data/config.yml")
-	email := prepareEmail(conf, conf.Users)
+	email := mail.NewMSG()
+	prepareEmail(email, conf.Users)
 
 	from := "apps.brottem@gmail.com"
 	if email.GetFrom() != from {
