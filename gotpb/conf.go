@@ -16,6 +16,7 @@ type Config struct {
 	EmailClientConfig EmailClientConfig `yaml:"emailClient"`
 	Port              int               `yaml:"port"`
 	Interval          int               `yaml:"interval"`
+	AlwaysSend        bool              `yaml:"alwaysSend"`
 }
 
 func (c Config) UsersInGroup(group string) []User {

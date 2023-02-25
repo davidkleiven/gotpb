@@ -2,6 +2,7 @@ package gotpb
 
 import (
 	"archive/zip"
+	"database/sql"
 	"fmt"
 	"log"
 	"regexp"
@@ -22,6 +23,8 @@ func panicOnErr(e error) {
 
 func RunSingleCheck(conf Config) {
 	file := make(chan string, len(conf.Groups))
+	db := conf.DbConnection()
+	defer db.Close()
 
 	for _, url := range conf.Groups {
 		go fetch(url, file)
@@ -29,12 +32,14 @@ func RunSingleCheck(conf Config) {
 
 	for name := range conf.Groups {
 		songs := songsFromZip(<-file)
-		newSongs := filterAndInsertSongsInDb(songs, conf)
+		newSongs := filterAndInsertSongsInDb(songs, conf, db)
 
 		email := mail.NewMSG()
-		sendNewSongNotification(newSongs, name, conf, email)
+		res := sendNewSongNotification(newSongs, name, conf, email, db)
+		log.Printf("%s\n", res.String())
 		email = mail.NewMSG()
-		sendSongListNotification(songs, name, conf, email)
+		res = sendSongListNotification(songs, name, conf, email, db)
+		log.Printf("%s\n", res.String())
 	}
 }
 
@@ -61,11 +66,8 @@ func songFromFile(file *zip.File) Song {
 	}
 }
 
-func filterAndInsertSongsInDb(songs []Song, conf Config) []Song {
+func filterAndInsertSongsInDb(songs []Song, conf Config, db *sql.DB) []Song {
 	t := time.Now().UTC().Add(-time.Hour * HOURS_PER_DAY * DAYS_PER_MONTH * conf.MemoryMonths)
-
-	db := getDB(conf.Db)
-	defer db.Close()
 
 	knownSongs := fetchNewerSongs(db, t)
 	newSongs := newSongs(songs, knownSongs)
@@ -73,11 +75,12 @@ func filterAndInsertSongsInDb(songs []Song, conf Config) []Song {
 	return newSongs
 }
 
-func sendNewSongNotification(songs []Song, group string, conf Config, email Email) {
+func sendNewSongNotification(songs []Song, group string, conf Config, email Email, db *sql.DB) ActionResult {
 	users := conf.UsersInGroup(group)
+	result := ActionResult{header: "sendNewSongNotification"}
 	if len(songs) == 0 || len(users) == 0 {
-		log.Printf("Number of new songs %d. Number of users in group %d. No notifications sent.", len(songs), len(users))
-		return
+		result.message = fmt.Sprintf("Number of new songs %d. Number of users in group %d. No notifications sent.", len(songs), len(users))
+		return result
 	}
 
 	prepareEmail(email, users)
@@ -85,10 +88,9 @@ func sendNewSongNotification(songs []Song, group string, conf Config, email Emai
 	email.SetSubject("New songs")
 	sendEmail(email, conf)
 
-	db := getDB(conf.Db)
-	defer db.Close()
 	insertNewSongNotification(db, group)
-	log.Printf("New songs notification sent")
+	result.message = "New songs notification sent"
+	return result
 }
 
 func produceEmail(songs []Song) string {
@@ -99,26 +101,55 @@ func produceEmail(songs []Song) string {
 	return msg
 }
 
-func sendSongListNotification(songs []Song, group string, conf Config, email Email) {
+type ActionResult struct {
+	header  string
+	message string
+	err     error
+}
+
+func (a *ActionResult) String() string {
+	str := fmt.Sprintf("%s: %s", a.header, a.message)
+	if a.err != nil {
+		str += fmt.Sprintf("\n%v", a.err)
+	}
+	return str
+}
+
+func sendSongListNotification(songs []Song, group string, conf Config, email Email, db *sql.DB) ActionResult {
 	timestamp := time.Now().UTC()
 	users := conf.UsersInGroup(group)
-	if timestamp.Weekday() != time.Wednesday {
-		log.Printf("Today is %v. No email sent. (Sends only on %v)", timestamp.Weekday(), time.Wednesday)
-		return
+	result := ActionResult{header: "sendSongListNotification"}
+
+	// conf.AlwaysSend is primarly used to disable the weekday check in unit tests
+	if !conf.AlwaysSend {
+		if timestamp.Weekday() != time.Wednesday {
+			result.message = fmt.Sprintf("Today is %v. No email sent. (Sends only on %v)", timestamp.Weekday(), time.Wednesday)
+			return result
+		}
 	}
-	db := conf.DbConnection()
-	defer db.Close()
-	latest := getLatestSongListNotification(db, group)
+	latest, err := getLatestSongListNotification(db, group)
+	if err != nil {
+		result.err = err
+		return result
+	}
 
 	if time.Since(latest) < time.Hour*time.Duration(48) {
-		log.Printf("Less than 48 hours since last song list notification. No notification sent\n")
-		return
+		result.message = "Less than 48 hours since last song list notification. No notification sent"
+		return result
 	}
 
 	prepareEmail(email, users)
 	email.SetSubject("Summary")
 	email.SetBody(mail.TextPlain, produceEmail(songs))
 	sendEmail(email, conf)
-	insertSongListNotification(db, group)
-	log.Printf("Song list notification sent")
+	if err = insertSongListNotification(db, group); err != nil {
+		result.err = err
+		return result
+	}
+	result.message = "Song list notification sent"
+	return result
+}
+
+func errorWithHeader(header string, err error) error {
+	return fmt.Errorf("%s: %v", header, err)
 }
