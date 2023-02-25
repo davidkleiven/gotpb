@@ -9,11 +9,11 @@ import (
 // Email represent a simple interface with methods the methds
 // required by this application to send emails
 type Email interface {
-	SetFrom(from string) *mail.Email
 	AddTo(...string) *mail.Email
 	Send(client *mail.SMTPClient) error
-	SetSubject(subject string) *mail.Email
 	SetBody(contenttype mail.ContentType, body string) *mail.Email
+	SetFrom(from string) *mail.Email
+	SetSubject(subject string) *mail.Email
 }
 
 func smtpClient(conf Config) *mail.SMTPClient {
@@ -27,7 +27,7 @@ func smtpClient(conf Config) *mail.SMTPClient {
 
 	smtp, err := client.Connect()
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("ERROR: %v\n", err)
 	}
 	return smtp
 }

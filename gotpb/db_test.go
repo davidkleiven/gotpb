@@ -2,6 +2,7 @@ package gotpb
 
 import (
 	"database/sql"
+	"gotpb/gotpb/t_utils"
 	"testing"
 	"time"
 
@@ -14,21 +15,35 @@ func TestInit(t *testing.T) {
 		t.Errorf("%v", err)
 	}
 
-	initDb(db)
+	if err = initDb(db); err != nil {
+		t.Errorf("%v\n", err)
+	}
 
-	query := "SELECT * FROM sqlite_master WHERE type='table'"
+	query := "SELECT name FROM sqlite_master WHERE type='table'"
 	rows, err := db.Query(query)
 
 	if err != nil {
 		t.Errorf("%v", err)
 	}
-	count := 0
+
+	names := []string{}
 	for rows.Next() {
-		count += 1
+		var name string
+		rows.Scan(&name)
+		names = append(names, name)
 	}
 
-	if count != 2 {
-		t.Errorf("Got %d tables expected 2", count)
+	expect := []string{"songs", "notifications"}
+	if len(names) != len(expect) {
+		t.Errorf("Expectd %v got %v\n", expect, names)
+		return
+	}
+
+	for i, name := range expect {
+		if name != names[i] {
+			t.Errorf("Expected %v got %v\n", expect, names)
+			return
+		}
 	}
 }
 
@@ -72,17 +87,28 @@ func TestInsert(t *testing.T) {
 }
 
 func TestInsertFetchNotifications(t *testing.T) {
-	db, err := sql.Open("sqlite3", "file::memory:?cache=shared")
+	db, err := sql.Open("sqlite3", t_utils.SqliteInMemResource(t.Name()))
 	if err != nil {
 		t.Errorf("%v\n", err)
 	}
-	initDb(db)
+	if err = initDb(db); err != nil {
+		t.Errorf("%v\n", err)
+	}
 
-	insertSongListNotification(db, "group1")
-	insertSongListNotification(db, "group2")
+	for _, group := range []string{"group1", "group2"} {
+		if err = insertSongListNotification(db, group); err != nil {
+			t.Errorf("%v\n", err)
+		}
+	}
 
-	notification1 := getLatestSongListNotification(db, "group1")
-	notification2 := getLatestSongListNotification(db, "group2")
+	notification1, err := getLatestSongListNotification(db, "group1")
+	if err != nil {
+		t.Errorf("%v\n", err)
+	}
+	notification2, err := getLatestSongListNotification(db, "group2")
+	if err != nil {
+		t.Errorf("%v\n", err)
+	}
 
 	if notification2.Before(notification1) {
 		t.Errorf("Notification 2 was inserted after notification end. t1: %v, t2: %v\n", notification1, notification2)
@@ -132,12 +158,17 @@ func TestNewSongs(t *testing.T) {
 }
 
 func TestGetLatestSongNotificationNoDBContent(t *testing.T) {
-	db, err := sql.Open("sqlite3", "file::memory:?cache=shared")
+	db, err := sql.Open("sqlite3", t_utils.SqliteInMemResource(t.Name()))
 	if err != nil {
 		t.Errorf("%v\n", err)
 	}
-	initDb(db)
-	latest := getLatestSongListNotification(db, "group")
+	if err = initDb(db); err != nil {
+		t.Errorf("%v\n", err)
+	}
+	latest, err := getLatestSongListNotification(db, "group")
+	if err != nil {
+		t.Errorf("%v\n", err)
+	}
 
 	if latest != defaultTime() {
 		t.Errorf("Expected %v got %v", defaultTime(), latest)
