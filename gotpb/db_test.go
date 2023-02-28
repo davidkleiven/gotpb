@@ -67,7 +67,10 @@ func TestInsert(t *testing.T) {
 		},
 	}
 
-	insertSongs(db, songs)
+	if err := insertSongs(db, songs); err != nil {
+		t.Errorf("%v\n", err)
+		return
+	}
 
 	timestamp := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
 	songsFetched := fetchNewerSongs(db, timestamp)

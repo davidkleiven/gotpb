@@ -111,21 +111,26 @@ func getDB(dbName string) (*sql.DB, error) {
 	return db, nil
 }
 
-func insertSong(db *sql.DB, song Song) {
+func insertSong(db *sql.DB, song Song) error {
 	t := time.Now().UTC().Format(TIME_LAYOUT)
 	statement, err := db.Prepare(INSERT_STMT)
 	if err != nil {
-		log.Printf("Error while inserting song %v", err)
-		return
+		return fmt.Errorf("insertSong: %w", err)
 	}
 	defer statement.Close()
-	statement.Exec(song.Code, song.Title, t, 1)
+	if _, err := statement.Exec(song.Code, song.Title, t, 1); err != nil {
+		return fmt.Errorf("insertSong: %w", err)
+	}
+	return nil
 }
 
-func insertSongs(db *sql.DB, songs []Song) {
+func insertSongs(db *sql.DB, songs []Song) error {
 	for _, song := range songs {
-		insertSong(db, song)
+		if err := insertSong(db, song); err != nil {
+			return fmt.Errorf("insertSongs: %w", err)
+		}
 	}
+	return nil
 }
 
 func fetchNewerSongs(db *sql.DB, t time.Time) []Song {
