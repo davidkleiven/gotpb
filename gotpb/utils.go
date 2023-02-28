@@ -149,7 +149,3 @@ func sendSongListNotification(songs []Song, group string, conf Config, email Ema
 	result.message = "Song list notification sent"
 	return result
 }
-
-func errorWithHeader(header string, err error) error {
-	return fmt.Errorf("%s: %v", header, err)
-}

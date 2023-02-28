@@ -47,18 +47,17 @@ func initDb(db *sql.DB) error {
 	statements := []string{CREATE_STMT, CREATE_NOTIFICATIONS}
 	tx, err := db.Begin()
 	if err != nil {
-		return errorWithHeader("initDb: ", err)
+		return fmt.Errorf("initDb: %w", err)
 	}
 	defer tx.Rollback()
 
 	for i, query := range statements {
 		if _, err := tx.Exec(query); err != nil {
-			header := fmt.Sprintf("initDb: statemtent %d (%s): ", i, query)
-			return errorWithHeader(header, err)
+			return fmt.Errorf("initDb: statemtent %d (%s): %w ", i, query, err)
 		}
 	}
 	if err = tx.Commit(); err != nil {
-		return errorWithHeader("initDb:", err)
+		return fmt.Errorf("initDb: %w", err)
 	}
 	return nil
 }
@@ -66,7 +65,7 @@ func initDb(db *sql.DB) error {
 func insertNotification(db *sql.DB, notificationType string, group string) error {
 	t := time.Now().UTC().Format(TIME_LAYOUT)
 	if _, err := db.Exec(INSERT_NOTIFICATION, t, notificationType, group); err != nil {
-		return errorWithHeader("insertNotification:", err)
+		return fmt.Errorf("insertNotification: %w", err)
 	}
 	return nil
 }
@@ -83,7 +82,7 @@ func getLatestSongListNotification(db *sql.DB, group string) (time.Time, error) 
 	rows, err := db.Query(LATEST_NOTIFICATION, SONG_LIST, group)
 
 	if err != nil {
-		return defaultTime(), errorWithHeader("getLatestSongListNotification:", err)
+		return defaultTime(), fmt.Errorf("getLatestSongListNotification: %w", err)
 	}
 	defer rows.Close()
 
