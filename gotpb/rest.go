@@ -18,7 +18,7 @@ func StatusHandlerFunc(w http.ResponseWriter, r *http.Request) {
 }
 
 type DbConnector interface {
-	DbConnection() *sql.DB
+	DbConnection() (*sql.DB, error)
 }
 
 type GotbbHandlers struct {
@@ -26,7 +26,12 @@ type GotbbHandlers struct {
 }
 
 func (gh *GotbbHandlers) LatestNotificationHandlerFunc(w http.ResponseWriter, r *http.Request) {
-	db := gh.connector.DbConnection()
+	db, err := gh.connector.DbConnection()
+	if err != nil {
+		log.Printf("Error: %v\n", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 	defer db.Close()
 
 	numArg := r.URL.Query().Get("num")

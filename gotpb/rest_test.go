@@ -32,16 +32,16 @@ func TestStatusHandler(t *testing.T) {
 
 type InMemoryConnector struct{}
 
-func (imc *InMemoryConnector) DbConnection() *sql.DB {
+func (imc *InMemoryConnector) DbConnection() (*sql.DB, error) {
 	db, err := sql.Open("sqlite3", "file::memory:?cache=shared")
 	if err != nil {
-		panic(err)
+		return db, err
 	}
 
 	initDb(db)
 	insertNotification(db, "update", "solo")
 	insertNotification(db, "summary", "solo")
-	return db
+	return db, nil
 }
 
 func request(url string) *http.Request {

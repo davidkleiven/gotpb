@@ -97,16 +97,18 @@ func getLatestSongListNotification(db *sql.DB, group string) (time.Time, error) 
 	return defaultTime(), nil
 }
 
-func getDB(dbName string) *sql.DB {
+func getDB(dbName string) (*sql.DB, error) {
 	if _, err := os.Stat(dbName); err != nil {
 		os.Create(dbName)
 	}
 	db, err := sql.Open("sqlite3", dbName)
 	if err != nil {
-		log.Fatal(err)
+		return db, fmt.Errorf("getDB: %w", err)
 	}
-	initDb(db)
-	return db
+	if err := initDb(db); err != nil {
+		return db, fmt.Errorf("getDB: %w", err)
+	}
+	return db, nil
 }
 
 func insertSong(db *sql.DB, song Song) {

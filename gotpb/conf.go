@@ -29,7 +29,7 @@ func (c Config) UsersInGroup(group string) []User {
 	return users
 }
 
-func (c Config) DbConnection() *sql.DB {
+func (c Config) DbConnection() (*sql.DB, error) {
 	return getDB(c.Db)
 }
 

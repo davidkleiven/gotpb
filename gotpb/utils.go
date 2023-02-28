@@ -23,7 +23,11 @@ func panicOnErr(e error) {
 
 func RunSingleCheck(conf Config) {
 	file := make(chan string, len(conf.Groups))
-	db := conf.DbConnection()
+	db, err := conf.DbConnection()
+	if err != nil {
+		log.Printf("Error: %v\n", err)
+		return
+	}
 	defer db.Close()
 
 	for _, url := range conf.Groups {
