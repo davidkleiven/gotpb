@@ -157,3 +157,16 @@ func TestGetLatestSongNotificationNoDBContent(t *testing.T) {
 		t.Errorf("Expected %v got %v", defaultTime(), latest)
 	}
 }
+
+func TestTimeFormatting(t *testing.T) {
+	now := time.Now().UTC().Round(time.Second)
+	now_formatted := now.Format(TIME_LAYOUT)
+	now_unformatted, err := time.Parse(TIME_LAYOUT, now_formatted)
+	if err != nil {
+		t.Errorf("%v\n", err)
+	}
+
+	if now != now_unformatted {
+		t.Errorf("Expected %v got %v\n", now, now_unformatted)
+	}
+}
