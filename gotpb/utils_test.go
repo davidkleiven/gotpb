@@ -54,9 +54,7 @@ func TestSendSongListNotification(t *testing.T) {
 		t.Errorf("%v\n", err)
 	}
 	defer db.Close()
-	if err = initDb(db); err != nil {
-		t.Errorf("%v\n", err)
-	}
+	initDb(db)
 
 	songs := []Song{
 		{
@@ -74,11 +72,7 @@ func TestSendSongListNotification(t *testing.T) {
 		sendSongListNotification(songs, group, conf, &email, db)
 
 		// Now one notification should be placed in the database
-		notifications, err := getLatestNotifications(db, 1000)
-
-		if err != nil {
-			t.Errorf("Attempt %d: %v\n", i, err)
-		}
+		notifications := getLatestNotifications(db, 1000)
 
 		if len(notifications) != 1 {
 			t.Errorf("Attempt %d: Expected 1 notification got %d\n", i, len(notifications))

@@ -15,9 +15,7 @@ func TestInit(t *testing.T) {
 		t.Errorf("%v", err)
 	}
 
-	if err = initDb(db); err != nil {
-		t.Errorf("%v\n", err)
-	}
+	initDb(db)
 
 	query := "SELECT name FROM sqlite_master WHERE type='table'"
 	rows, err := db.Query(query)
@@ -91,24 +89,14 @@ func TestInsertFetchNotifications(t *testing.T) {
 	if err != nil {
 		t.Errorf("%v\n", err)
 	}
-	if err = initDb(db); err != nil {
-		t.Errorf("%v\n", err)
-	}
+	initDb(db)
 
 	for _, group := range []string{"group1", "group2"} {
-		if err = insertSongListNotification(db, group); err != nil {
-			t.Errorf("%v\n", err)
-		}
+		insertSongListNotification(db, group)
 	}
 
-	notification1, err := getLatestSongListNotification(db, "group1")
-	if err != nil {
-		t.Errorf("%v\n", err)
-	}
-	notification2, err := getLatestSongListNotification(db, "group2")
-	if err != nil {
-		t.Errorf("%v\n", err)
-	}
+	notification1 := getLatestSongListNotification(db, "group1")
+	notification2 := getLatestSongListNotification(db, "group2")
 
 	if notification2.Before(notification1) {
 		t.Errorf("Notification 2 was inserted after notification end. t1: %v, t2: %v\n", notification1, notification2)
@@ -162,13 +150,8 @@ func TestGetLatestSongNotificationNoDBContent(t *testing.T) {
 	if err != nil {
 		t.Errorf("%v\n", err)
 	}
-	if err = initDb(db); err != nil {
-		t.Errorf("%v\n", err)
-	}
-	latest, err := getLatestSongListNotification(db, "group")
-	if err != nil {
-		t.Errorf("%v\n", err)
-	}
+	initDb(db)
+	latest := getLatestSongListNotification(db, "group")
 
 	if latest != defaultTime() {
 		t.Errorf("Expected %v got %v", defaultTime(), latest)

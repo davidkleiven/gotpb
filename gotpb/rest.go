@@ -26,6 +26,13 @@ type GotbbHandlers struct {
 }
 
 func (gh *GotbbHandlers) LatestNotificationHandlerFunc(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Error: %v\n", r)
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	}()
+
 	db := gh.connector.DbConnection()
 	defer db.Close()
 
@@ -40,12 +47,7 @@ func (gh *GotbbHandlers) LatestNotificationHandlerFunc(w http.ResponseWriter, r 
 		log.Printf("Error: %v\nUsing default value %d", err, num)
 	}
 
-	notifications, err := getLatestNotifications(db, num)
-	if err != nil {
-		log.Printf("Error: %v\n", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	notifications := getLatestNotifications(db, num)
 
 	jsonNotifications, err := json.Marshal(notifications)
 	if err != nil {

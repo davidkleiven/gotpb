@@ -16,9 +16,7 @@ const CACHE_FOLDER = ".gotbbcache"
 func cacheFile(url string) string {
 	newpath := filepath.Join(".", CACHE_FOLDER)
 	err := os.MkdirAll(newpath, os.ModePerm)
-	if err != nil {
-		log.Fatal(err)
-	}
+	panicOnErr(err)
 
 	return CACHE_FOLDER + "/" + urlHash(url) + ".zip"
 }
@@ -29,29 +27,30 @@ func urlHash(url string) string {
 	return fmt.Sprintf("%x", h.Sum32())
 }
 
-func fetch(url string, c chan string) {
+func fetch(url string, c chan string) error {
 	log.Print("Downloading zip archive")
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Printf("Could not fetch data. Status: %s", resp.Status)
-		return
+		c <- ""
+		return err
 	}
 
 	file := cacheFile(url)
 	out, err := os.Create(file)
 	if err != nil {
 		c <- ""
-		log.Fatal(err)
+		return err
 	}
 	defer resp.Body.Close()
 	defer out.Close()
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
 		c <- ""
-		log.Fatal(err)
+		return err
 	}
 	log.Print("Finished downloading zip-archive")
 	c <- file
+	return nil
 }
 
 func songsFromZip(fname string) []Song {

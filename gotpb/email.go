@@ -42,7 +42,5 @@ func prepareEmail(email Email, users []User) {
 func sendEmail(email Email, conf Config) {
 	client := smtpClient(conf)
 	err := email.Send(client)
-	if err != nil {
-		log.Printf("Could not send email because: %v", err)
-	}
+	panicOnErr(err)
 }

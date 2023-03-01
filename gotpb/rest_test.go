@@ -34,9 +34,7 @@ type InMemoryConnector struct{}
 
 func (imc *InMemoryConnector) DbConnection() *sql.DB {
 	db, err := sql.Open("sqlite3", "file::memory:?cache=shared")
-	if err != nil {
-		panic(err)
-	}
+	panicOnErr(err)
 
 	initDb(db)
 	insertNotification(db, "update", "solo")
@@ -46,9 +44,7 @@ func (imc *InMemoryConnector) DbConnection() *sql.DB {
 
 func request(url string) *http.Request {
 	r, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		panic(err)
-	}
+	panicOnErr(err)
 	return r
 }
 

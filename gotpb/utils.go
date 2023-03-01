@@ -21,7 +21,14 @@ func panicOnErr(e error) {
 	}
 }
 
+func recoverErrors() {
+	if r := recover(); r != nil {
+		log.Printf("ERROR: %v\n", r)
+	}
+}
+
 func RunSingleCheck(conf Config) {
+	defer recoverErrors()
 	file := make(chan string, len(conf.Groups))
 	db := conf.DbConnection()
 	defer db.Close()
@@ -127,11 +134,7 @@ func sendSongListNotification(songs []Song, group string, conf Config, email Ema
 			return result
 		}
 	}
-	latest, err := getLatestSongListNotification(db, group)
-	if err != nil {
-		result.err = err
-		return result
-	}
+	latest := getLatestSongListNotification(db, group)
 
 	if time.Since(latest) < time.Hour*time.Duration(48) {
 		result.message = "Less than 48 hours since last song list notification. No notification sent"
@@ -142,14 +145,7 @@ func sendSongListNotification(songs []Song, group string, conf Config, email Ema
 	email.SetSubject("Summary")
 	email.SetBody(mail.TextPlain, produceEmail(songs))
 	sendEmail(email, conf)
-	if err = insertSongListNotification(db, group); err != nil {
-		result.err = err
-		return result
-	}
+	insertSongListNotification(db, group)
 	result.message = "Song list notification sent"
 	return result
-}
-
-func errorWithHeader(header string, err error) error {
-	return fmt.Errorf("%s: %v", header, err)
 }
