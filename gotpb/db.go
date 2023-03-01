@@ -3,7 +3,6 @@ package gotpb
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
@@ -43,48 +42,37 @@ func defaultTime() time.Time {
 	return time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC)
 }
 
-func initDb(db *sql.DB) error {
+func initDb(db *sql.DB) {
 	statements := []string{CREATE_STMT, CREATE_NOTIFICATIONS}
 	tx, err := db.Begin()
-	if err != nil {
-		return errorWithHeader("initDb: ", err)
-	}
+	panicOnErr(err)
 	defer tx.Rollback()
 
-	for i, query := range statements {
-		if _, err := tx.Exec(query); err != nil {
-			header := fmt.Sprintf("initDb: statemtent %d (%s): ", i, query)
-			return errorWithHeader(header, err)
-		}
+	for _, query := range statements {
+		_, err = tx.Exec(query)
+		panicOnErr(err)
 	}
-	if err = tx.Commit(); err != nil {
-		return errorWithHeader("initDb:", err)
-	}
-	return nil
+	err = tx.Commit()
+	panicOnErr(err)
 }
 
-func insertNotification(db *sql.DB, notificationType string, group string) error {
+func insertNotification(db *sql.DB, notificationType string, group string) {
 	t := time.Now().UTC().Format(TIME_LAYOUT)
-	if _, err := db.Exec(INSERT_NOTIFICATION, t, notificationType, group); err != nil {
-		return errorWithHeader("insertNotification:", err)
-	}
-	return nil
+	_, err := db.Exec(INSERT_NOTIFICATION, t, notificationType, group)
+	panicOnErr(err)
 }
 
-func insertNewSongNotification(db *sql.DB, group string) error {
-	return insertNotification(db, NEW_SONG, group)
+func insertNewSongNotification(db *sql.DB, group string) {
+	insertNotification(db, NEW_SONG, group)
 }
 
-func insertSongListNotification(db *sql.DB, group string) error {
-	return insertNotification(db, SONG_LIST, group)
+func insertSongListNotification(db *sql.DB, group string) {
+	insertNotification(db, SONG_LIST, group)
 }
 
-func getLatestSongListNotification(db *sql.DB, group string) (time.Time, error) {
+func getLatestSongListNotification(db *sql.DB, group string) time.Time {
 	rows, err := db.Query(LATEST_NOTIFICATION, SONG_LIST, group)
-
-	if err != nil {
-		return defaultTime(), errorWithHeader("getLatestSongListNotification:", err)
-	}
+	panicOnErr(err)
 	defer rows.Close()
 
 	if rows.Next() {
@@ -92,10 +80,10 @@ func getLatestSongListNotification(db *sql.DB, group string) (time.Time, error) 
 		rows.Scan(&timestamp)
 
 		if t, err := time.Parse(TIME_LAYOUT, timestamp); err == nil {
-			return t, nil
+			return t
 		}
 	}
-	return defaultTime(), nil
+	return defaultTime()
 }
 
 func getDB(dbName string) *sql.DB {
@@ -103,9 +91,7 @@ func getDB(dbName string) *sql.DB {
 		os.Create(dbName)
 	}
 	db, err := sql.Open("sqlite3", dbName)
-	if err != nil {
-		log.Fatal(err)
-	}
+	panicOnErr(err)
 	initDb(db)
 	return db
 }
@@ -113,12 +99,10 @@ func getDB(dbName string) *sql.DB {
 func insertSong(db *sql.DB, song Song) {
 	t := time.Now().UTC().Format(TIME_LAYOUT)
 	statement, err := db.Prepare(INSERT_STMT)
-	if err != nil {
-		log.Printf("Error while inserting song %v", err)
-		return
-	}
+	panicOnErr(err)
 	defer statement.Close()
-	statement.Exec(song.Code, song.Title, t, 1)
+	_, err = statement.Exec(song.Code, song.Title, t, 1)
+	panicOnErr(err)
 }
 
 func insertSongs(db *sql.DB, songs []Song) {
@@ -130,10 +114,7 @@ func insertSongs(db *sql.DB, songs []Song) {
 func fetchNewerSongs(db *sql.DB, t time.Time) []Song {
 	songs := []Song{}
 	rows, err := db.Query(GET_SONGS, t.String())
-	if err != nil {
-		log.Printf("%v", err)
-		return songs
-	}
+	panicOnErr(err)
 	defer rows.Close()
 
 	for rows.Next() {
@@ -168,12 +149,10 @@ type NotificationInfo struct {
 }
 
 // Return num latest notifications
-func getLatestNotifications(db *sql.DB, num int) ([]NotificationInfo, error) {
+func getLatestNotifications(db *sql.DB, num int) []NotificationInfo {
 	query := fmt.Sprintf("SELECT * FROM notifications ORDER BY timestamp LIMIT %d", num)
 	rows, err := db.Query(query)
-	if err != nil {
-		return []NotificationInfo{}, err
-	}
+	panicOnErr(err)
 	defer rows.Close()
 
 	notificationInfo := []NotificationInfo{}
@@ -182,5 +161,5 @@ func getLatestNotifications(db *sql.DB, num int) ([]NotificationInfo, error) {
 		rows.Scan(&i.Time, &i.Type, &i.Group)
 		notificationInfo = append(notificationInfo, i)
 	}
-	return notificationInfo, nil
+	return notificationInfo
 }
